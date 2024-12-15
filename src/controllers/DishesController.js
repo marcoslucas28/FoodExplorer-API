@@ -3,7 +3,7 @@ const DiskStorage = require("../providers/DiskStorage")
 const knex = require("../database/knex")
 
 class DishesController {
-    categories = ["meals", "desserts", "drinks"]
+    //categories = ["meals", "desserts", "drinks"]
 
     async create(req, res){
         const { name, description, price, category, ingredients } = req.body
@@ -43,6 +43,14 @@ class DishesController {
             return res.status(500).json({error: 'Internal server erro'})
         }
         
+    }
+
+    async delete(req, res){
+        const { id } = req.params
+
+        await knex('dishes').where({id}).delete()
+
+        return res.json()
     }
 }
 
