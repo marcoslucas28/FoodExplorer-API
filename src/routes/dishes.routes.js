@@ -14,6 +14,7 @@ dishesRoutes.use(ensureAuthenticated)
 
 dishesRoutes.post("/", verifyUserAuthorization, upload.single('image'), dishesController.create)
 dishesRoutes.put("/:id", verifyUserAuthorization, upload.single('image'), dishesController.update)
+dishesRoutes.get("/", dishesController.index)
 dishesRoutes.delete("/:id", verifyUserAuthorization, dishesController.delete)
 
 module.exports = dishesRoutes

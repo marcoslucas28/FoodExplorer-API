@@ -111,6 +111,31 @@ class DishesController {
 
     }
 
+    async index(req, res){
+        const { category, name } = req.query
+
+        let dishes
+
+        try{
+
+            if(name){
+                dishes = await knex('dishes')
+                .select('dishes.*')
+                .leftJoin('ingredients', 'dishes.id', 'ingredients.dish_id')
+                .where("dishes.category", category)
+                .andWhere((builder) => {
+                    builder.whereLike('dishes.name', `%${name}%`).orWhereLike('ingredients.name', `%${name}%`)
+                }).groupBy('dishes.id').orderBy('dishes.name')
+            }else {
+                dishes = await knex('dishes').where({category}).groupBy('id').orderBy('name')
+            }
+
+            return res.json(dishes)
+        } catch (error){
+            console.log(error)
+            return res.status(500).json({error: 'Internal server erro'})
+        }
+    }
 }
 
 module.exports = DishesController
