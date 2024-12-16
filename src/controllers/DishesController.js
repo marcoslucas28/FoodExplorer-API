@@ -48,6 +48,14 @@ class DishesController {
     async delete(req, res){
         const { id } = req.params
 
+        const dish = await knex('dishes').where({id}).first()
+
+        const diskStorage = new DiskStorage()
+
+        if(dish.image){
+            await diskStorage.deleteFile(dish.image)
+        }
+
         await knex('dishes').where({id}).delete()
 
         return res.json()
