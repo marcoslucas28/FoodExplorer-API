@@ -60,6 +60,57 @@ class DishesController {
 
         return res.json()
     }
+
+    async update(req, res){
+        const { name, description, price, category, ingredients  } = req.body
+        const {id} = req.params
+        const imageFileName = req.file.filename
+
+        const diskStorage = new DiskStorage()
+        
+        const dish = await knex("dishes").where({id}).first()
+
+        const categoryIsValid = ["meals", "desserts", "drinks"].includes(category) 
+
+        if(!categoryIsValid){
+            throw new AppError("Categoria invalída")
+        }
+
+        if(!dish.id){
+            throw new AppError("Prato não encontrado")
+        }
+
+        await diskStorage.deleteFile(dish.image)
+        const fileName = await diskStorage.saveFile(imageFileName)
+
+        dish.name = name ?? dish.name
+        dish.description = description ?? dish.description
+        dish.price = price ?? dish.price
+        dish.category = category ?? dish.category
+        dish.image = fileName ?? dish.image
+
+
+        try {
+            const ingredientsInsert = ingredients.map(ingredient => {
+                return{
+                    dish_id: dish.id,
+                    name: ingredient
+                }
+            })
+
+            await knex("ingredients").where({dish_id: id}).delete()
+            await knex('ingredients').insert(ingredientsInsert)
+
+            await knex("dishes").where({id}).update(dish)
+
+            return res.status(201).json("Prato atulizado")
+        } catch (error) {
+            console.log(error)
+            return res.status(500).json({error: 'Internal server erro'})
+        }
+
+    }
+
 }
 
 module.exports = DishesController

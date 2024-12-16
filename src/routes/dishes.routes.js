@@ -13,6 +13,7 @@ const dishesController = new DishesController()
 dishesRoutes.use(ensureAuthenticated)
 
 dishesRoutes.post("/", verifyUserAuthorization, upload.single('image'), dishesController.create)
+dishesRoutes.put("/:id", verifyUserAuthorization, upload.single('image'), dishesController.update)
 dishesRoutes.delete("/:id", verifyUserAuthorization, dishesController.delete)
 
 module.exports = dishesRoutes
