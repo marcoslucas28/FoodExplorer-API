@@ -8,6 +8,7 @@ const cookieParser = require("cookie-parser")
 const routes = require("./routes")
 const database = require("./database/sqlite")
 const AppError = require("./utils/AppError")
+const uploadsConfig= require('./configs/upload')
 
 database()
 
@@ -23,6 +24,7 @@ app.use(cors({
 }))
 app.options('*', cors())
 
+app.use("/files", express.static(uploadsConfig.UPLOADS_FOLDER))
 
 app.use(routes)
 
