@@ -64,7 +64,7 @@ class DishesController {
     async update(req, res){
         const { name, description, price, category, ingredients  } = req.body
         const {id} = req.params
-        const imageFileName = req.file.filename
+        const imageFileName = req.file ? req.file.filename: null
 
         const diskStorage = new DiskStorage()
         
@@ -80,14 +80,15 @@ class DishesController {
             throw new AppError("Prato não encontrado")
         }
 
-        await diskStorage.deleteFile(dish.image)
-        const fileName = await diskStorage.saveFile(imageFileName)
+        if(imageFileName){
+            await diskStorage.deleteFile(dish.image)
+            dish.image = await diskStorage.saveFile(imageFileName)
+        }
 
         dish.name = name ?? dish.name
         dish.description = description ?? dish.description
         dish.price = price ?? dish.price
         dish.category = category ?? dish.category
-        dish.image = fileName ?? dish.image
 
 
         try {
