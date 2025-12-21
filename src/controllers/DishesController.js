@@ -114,6 +114,7 @@ class DishesController {
 
     async index(req, res){
         const { category, name } = req.query
+        const { id: user_id } = req.user
 
         let dishes
 
@@ -131,7 +132,15 @@ class DishesController {
                 dishes = await knex('dishes').where({category}).groupBy('id').orderBy('name')
             }
 
-            return res.json(dishes)
+            const favorites = await knex('favoriteDishes').where({user_id}).select('dish_id')
+            const favoriteIds = favorites.map(f => f.dish_id)
+
+            const dishesWithFavorites = dishes.map(dish => ({
+                ...dish,
+                isFavorite: favoriteIds.includes(dish.id)
+            }))
+
+            return res.json(dishesWithFavorites)
         } catch (error){
             console.log(error)
             return res.status(500).json({error: 'Internal server erro'})
