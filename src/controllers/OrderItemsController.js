@@ -12,12 +12,13 @@ class OrderItemsController {
         const { dish_id, quantity } = req.body;
         const { id } = req.user;
 
-        let order = await knex('orders').where({ user_id: id, status: 'pending' }).first();
+        let order = await knex('orders').where({ user_id: id, payment_status: 'pending' }).first();
 
         if (!order) {
             const [newOrderId] = await knex('orders').insert({
                 user_id: id,
                 status: 'pending',
+                payment_status: 'pending',
                 total_price: 0
             });
             order = { id: newOrderId };

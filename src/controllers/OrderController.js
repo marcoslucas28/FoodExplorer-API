@@ -16,6 +16,7 @@ class OrderController {
         "orders.user_id",
         "orders.status",
         "orders.total_price",
+        "orders.payment_status", 
         "orders.created_at",
         "orders.updated_at",
         "order_items.id as item_id",
@@ -25,6 +26,8 @@ class OrderController {
         "dishes.name as dish_name",
         "dishes.image as dish_image"
       );
+
+    query = query.whereNot("orders.payment_status", "pending");
 
     if (!isAdmin) {
       query = query.where("orders.user_id", id);
@@ -42,7 +45,8 @@ class OrderController {
         ordersMap.set(orderId, {
           id: row.order_id,
           user_id: row.user_id,
-          status: row.status,
+          status: row.status, 
+          payment_status: row.payment_status,
           total_price: row.total_price,
           created_at: row.created_at,
           updated_at: row.updated_at,
@@ -90,7 +94,7 @@ class OrderController {
 
   async show(req, res) {
     const { id } = req.user;
-    const order = await knex("orders").where({ user_id: id, status: "pending" }).first();
+    const order = await knex("orders").where({ user_id: id, payment_status: "pending" }).first();
 
     if (!order) {
       throw new AppError("Order not found.", 404);
