@@ -5,7 +5,11 @@ const express = require("express")
 const cors = require("cors")
 const cookieParser = require("cookie-parser")
 
-const knex = require("./database/knex"); // <--- Faltava isso
+const http = require("http")
+const { initSocket } = require("./socket")
+const { getIO } = require("./socket")
+
+const knex = require("./database/knex")
 const stripe = require('stripe')(process.env.SECRET_KEY_STRIPE);
 
 const routes = require("./routes")
@@ -18,39 +22,37 @@ database()
 const app = express()
 
 
-app.use((req, res, next) => {
-  console.log(`>> REQUISIÇÃO CHEGOU: ${req.method} ${req.url}`);
-  next();
-});
-
 app.post('/webhook', express.raw({ type: "application/json" }), async (request, response) => {
   const sig = request.headers['stripe-signature'];
   let event;
-  
-  console.log(">> Webhook acionado!"); // Log de depuração
 
   try {
-    // Certifique-se que process.env.CHAVE_WEBHOOK_STRIPE é a chave whsec_...
     event = stripe.webhooks.constructEvent(request.body, sig, process.env.CHAVE_WEBHOOK_STRIPE);
   } catch (err) {
     console.error(">> Erro na assinatura do Webhook:", err.message);
     return response.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Se passou daqui, a assinatura é válida
   switch (event.type) {
     case 'checkout.session.completed':
       const session = event.data.object;
-      console.log(">> Pagamento aprovado via Stripe!");
       
       const orderId = session.metadata.order_id;
+      const user_id = session.metadata.userID
 
       try {
         await knex('orders').where({ id: orderId }).update({
-            payment_status: 'paid', // Atualiza status do pagamento
+            payment_status: 'paid', 
             updated_at: knex.fn.now()
         });
-        console.log(`>> Pedido ${orderId} atualizado no banco com sucesso!`);
+
+        const io = getIO()
+
+        io.to("admin").emit("new_order", {
+          order_id: orderId,
+          user_id: user_id,
+          message: "Novo pedido criado"
+        })
       } catch (dbError) {
         console.error(">> Erro ao atualizar banco:", dbError);
       }
@@ -95,4 +97,8 @@ app.use((error, request, response, next) => {
 
 const PORT = process.env.PORT || 3333
 
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`))
+const server = http.createServer(app)
+
+initSocket(server)
+
+server.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`))

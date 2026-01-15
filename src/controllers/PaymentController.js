@@ -38,10 +38,11 @@ class PaymentController {
     const session = await stripe.checkout.sessions.create({
       line_items: lineItems,
       mode: 'payment',
-      success_url: `http://localhost:3000/historico-de-pedidos`, 
-      cancel_url: `http://localhost:3000/carrinho`,
+      success_url: process.env.SUCESS_URL_STRIPE, 
+      cancel_url: process.env.CANCEL_URL_STRIPE,
       metadata: {
-        order_id: order.id
+        order_id: order.id,
+        userID: user_id
       }
     });
 

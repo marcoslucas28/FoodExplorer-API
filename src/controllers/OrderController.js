@@ -1,5 +1,6 @@
 const AppError = require("../utils/AppError");
 const knex = require("../database/knex");
+const { getIO } = require("../socket")
 
 class OrderController {
   async index(req, res) {
@@ -88,6 +89,18 @@ class OrderController {
     }
 
     await knex("orders").where({ id: order_id }).update({ status });
+
+    const io = getIO()
+
+    io.to("admin").emit("order_status_updated", {
+      order_id,
+      status
+    })
+
+    io.to(`user_${order.user_id}`).emit("order_status_updated", {
+      order_id,
+      status
+    })
 
     return res.json({ message: "Order updated successfully." });
   }
